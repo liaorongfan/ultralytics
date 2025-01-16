@@ -2272,6 +2272,113 @@ class RandomLoadText:
         return labels
 
 
+class RandomErase:
+    """
+    Randomly erases a portion of the image and replaces it with a random color.
+
+    This class applies random erasing to an image by replacing a portion of the image with a random color.
+    It is a form of data augmentation that can help improve the performance of object detection models.
+
+    Attributes:
+        p (float): Probability of applying random erasing.
+        scale (Tuple[float, float]): Range for the scale of the erased area.
+        ratio (Tuple[float, float]): Range for the aspect ratio of the erased area.
+        value (Tuple[int, int, int]): Range for the random color value.
+
+    Methods:
+        __call__: Applies random erasing to the input image.
+
+    Examples:
+        >>> random_erase = RandomErase(p=0.5, scale=(0.02, 0.2), ratio=(0.3, 3), value=(0, 255))
+        >>> labels = {"img": np.random.rand(640, 640, 3), "cls": np.array([0, 1]), "instances": Instances(...)}
+        >>> updated_labels = random_erase(labels)
+    """
+
+    def __init__(self, p=0.5, scale=(0.02, 0.2), ratio=(0.3, 3), value=(0, 255)):
+
+        self.p = p
+        self.scale = scale
+        self.ratio = ratio
+        self.value = value
+
+    def __call__(self, labels, *args, **kwargs):
+        """
+        Applies random erasing to the input image.
+
+        This method applies random erasing to the input image by replacing a portion of the image with a random color.
+        The size and aspect ratio of the erased area are randomly selected within the specified ranges.
+
+        Args:
+            labels (Dict): A dictionary containing image labels and metadata.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            (Dict): Updated labels dictionary with random erasing applied to the image.
+        """
+        if random.random() < self.p:
+            return self.random_erasing(labels, *args, **kwargs)
+        return labels
+
+    def random_erasing(self, labels, *args, **kwargs):
+        """
+        Applies random erasing to the input image.
+
+        This method applies random erasing to the input image by replacing a portion of the image with a random color.
+        The size and aspect ratio of the erased area are randomly selected within the specified ranges.
+
+        Args:
+            labels (Dict): A dictionary containing image labels and metadata.
+
+        Returns:
+            (Dict): Updated labels dictionary with random erasing applied to the image.
+        """
+        img = labels["img"]
+        h, w = img.shape[:2]
+        area = h * w
+        scale = random.uniform(*self.scale)
+        ratio = random.uniform(*self.ratio)
+        area_erased = area * scale
+        h_erased = int(math.sqrt(area_erased * ratio))
+        w_erased = int(math.sqrt(area_erased / ratio))
+
+        # Ensure erased dimensions do not exceed image dimensions
+        if h_erased > h or w_erased > w:
+            return labels
+
+        x = random.randint(0, w - w_erased)
+        y = random.randint(0, h - h_erased)
+        # Update instances
+        img[y: y + h_erased, x: x + w_erased] = np.random.randint(
+            low=self.value[0], high=self.value[1] + 1, size=(h_erased, w_erased, 3)
+        )
+        instances = labels["instances"]
+        instances.convert_bbox("xywh")
+        instances.denormalize(w, h)
+        mask = ~(
+                (instances.bboxes[:, 0] > x) &
+                (instances.bboxes[:, 0] < x + w_erased) &
+                (instances.bboxes[:, 1] > y) &
+                (instances.bboxes[:, 1] < y + h_erased)
+        )
+        # x1_in_erase = (instances.bboxes[:, 0] > x) & (instances.bboxes[:, 0] < x + w_erased)
+        # y1_in_erase = (instances.bboxes[:, 1] > y) & (instances.bboxes[:, 1] < y + h_erased)
+        # x2_in_erase = (instances.bboxes[:, 2] > x) & (instances.bboxes[:, 2] < x + w_erased)
+        # y2_in_erase = (instances.bboxes[:, 3] > y) & (instances.bboxes[:, 3] < y + h_erased)
+        # mask = ~(x1_in_erase | y1_in_erase | x2_in_erase | y2_in_erase)
+        instances.set_bboxes(instances.bboxes[mask])
+        # instances = Instances(bboxes=bboxes)
+        # Update cls
+        cls = labels["cls"]
+        cls = cls[mask]
+        # update labels
+        labels["img"] = img
+        labels["instances"] = instances
+        labels["cls"] = cls
+
+        return labels
+
+
 def v8_transforms(dataset, imgsz, hyp, stretch=False):
     """
     Applies a series of image transformations for training.
@@ -2329,6 +2436,7 @@ def v8_transforms(dataset, imgsz, hyp, stretch=False):
 
     return Compose(
         [
+            RandomErase(p=1.0, scale=(0.1, 0.4), ratio=(0.3, 2), value=(0, 255)),
             pre_transform,
             MixUp(dataset, pre_transform=pre_transform, p=hyp.mixup),
             Albumentations(p=1.0),

@@ -427,3 +427,7 @@ class Instances:
     def bboxes(self):
         """Return bounding boxes."""
         return self._bboxes.bboxes
+
+    def set_bboxes(self, bboxes):
+        """Set bounding boxes."""
+        self._bboxes.bboxes = bboxes
