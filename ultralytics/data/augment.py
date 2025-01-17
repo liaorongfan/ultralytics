@@ -2379,6 +2379,68 @@ class RandomErase:
         return labels
 
 
+class RandomEraseBBox:
+    """
+    Randomly erase a portion of bboxes in certain class and replace them with a random color.
+    """
+    def __init__(self, p=0.5, cls_p=0.5, erase_cls=None):
+        self.p = p
+        self.cls_p = cls_p
+        self.erase_cls = erase_cls
+        
+    def __call__(self, labels, *args, **kwargs):
+        if random.random() < self.p:
+            return self.random_erasing(labels, *args, **kwargs)
+        return labels
+    
+    def random_erasing(self, labels, *args, **kwargs):
+        """
+        erase a portion of bboxes in certain class and replace them with a random color.
+        
+        Args:
+            labels(Dict): A dictionary containing image labels and metadata.
+
+        Returns:
+        """
+        img = labels["img"]
+        h, w = img.shape[:2]
+        instances = labels["instances"]
+        instances.convert_bbox("xywh")
+        instances.denormalize(w, h)
+        cls = labels["cls"]
+        mask = np.zeros(len(cls), dtype=bool)
+        for i, c in enumerate(cls):
+            if c in self.erase_cls:
+                mask[i] = True
+        # erase a portion of bboxes in that class
+        mask = mask & (np.random.rand(len(mask)) < self.cls_p)
+        if not mask.any():
+            return labels
+        bboxes = instances.bboxes[mask]
+        for bbox in bboxes:
+            x, y, bw, bh = bbox
+            # Randomly erase a portion of the bbox
+            area = bw * bh
+            scale = random.uniform(0.8, 0.9)
+            ratio = random.uniform(0.8, 1.0)
+            area_erased = area * scale
+            h_erased = int(math.sqrt(area_erased * ratio))
+            w_erased = int(math.sqrt(area_erased / ratio))
+            # Ensure erased dimensions do not exceed image dimensions
+            x, y = int(x), int(y)
+            # x_max = max(x, int(x + bw - w_erased))
+            # y_max = max(y, int(y + bh - h_erased))
+            # x, y = random.randint(x, x_max), random.randint(y, y_max)
+            h_erased = min(h, int(y + h_erased)) - y
+            w_erased = min(w, int(x + w_erased)) - x
+            img[y: y + h_erased, x: x + w_erased] = np.random.randint(0, 256, size=(h_erased, w_erased, 3))
+        instances.set_bboxes(instances.bboxes[~mask])
+        labels["img"] = img
+        labels["instances"] = instances
+        labels["cls"] = cls[~mask]
+        return labels
+        
+
 def v8_transforms(dataset, imgsz, hyp, stretch=False):
     """
     Applies a series of image transformations for training.
@@ -2436,7 +2498,8 @@ def v8_transforms(dataset, imgsz, hyp, stretch=False):
 
     return Compose(
         [
-            RandomErase(p=1.0, scale=(0.1, 0.4), ratio=(0.3, 2), value=(0, 255)),
+            # RandomErase(p=1.0, scale=(0.1, 0.4), ratio=(0.3, 2), value=(0, 255)),
+            RandomEraseBBox(p=1.0, cls_p=0.4, erase_cls=[10, 11]),
             pre_transform,
             MixUp(dataset, pre_transform=pre_transform, p=hyp.mixup),
             Albumentations(p=1.0),
