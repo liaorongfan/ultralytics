@@ -2427,13 +2427,17 @@ class RandomEraseBBox:
             h_erased = int(math.sqrt(area_erased * ratio))
             w_erased = int(math.sqrt(area_erased / ratio))
             # Ensure erased dimensions do not exceed image dimensions
-            x, y = int(x), int(y)
             # x_max = max(x, int(x + bw - w_erased))
             # y_max = max(y, int(y + bh - h_erased))
             # x, y = random.randint(x, x_max), random.randint(y, y_max)
-            h_erased = min(h, int(y + h_erased)) - y
-            w_erased = min(w, int(x + w_erased)) - x
-            img[y: y + h_erased, x: x + w_erased] = np.random.randint(0, 256, size=(h_erased, w_erased, 3))
+            # make h_erased and w_erased even number
+            y1 = y - h_erased / 2
+            y2 = y + h_erased / 2
+            x1 = x - w_erased / 2
+            x2 = x + w_erased / 2
+            x1, x2 = int(max(0, x1)), int(min(w, x2))
+            y1, y2 = int(max(0, y1)), int(min(h, y2))
+            img[y1: y2, x1: x2] = np.random.randint(0, 256, size=(y2 - y1, x2 - x1, 3))
         instances.set_bboxes(instances.bboxes[~mask])
         labels["img"] = img
         labels["instances"] = instances
