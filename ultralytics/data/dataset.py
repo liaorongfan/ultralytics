@@ -215,6 +215,13 @@ class YOLODataset(BaseDataset):
         bbox_format = label.pop("bbox_format")
         normalized = label.pop("normalized")
 
+        # cls = label.pop("cls")
+        # _cls = cls.squeeze()
+        # _cls = (_cls == 11) | (_cls == 10) | (_cls == 8)
+        # bboxes = bboxes[~_cls]
+        # cls = cls[~_cls]
+        # label["cls"] = cls
+        
         # NOTE: do NOT resample oriented boxes
         segment_resamples = 100 if self.use_obb else 1000
         if len(segments) > 0:
