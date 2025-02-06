@@ -2503,7 +2503,7 @@ def v8_transforms(dataset, imgsz, hyp, stretch=False):
     return Compose(
         [
             # RandomErase(p=1.0, scale=(0.1, 0.4), ratio=(0.3, 2), value=(0, 255)),
-            RandomEraseBBox(p=1.0, cls_p=0.4, erase_cls=[10, 11]),
+            # RandomEraseBBox(p=1.0, cls_p=0.4, erase_cls=[10, 11]),
             pre_transform,
             MixUp(dataset, pre_transform=pre_transform, p=hyp.mixup),
             Albumentations(p=1.0),

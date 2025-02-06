@@ -10,16 +10,16 @@
 # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
 path: ../datasets/omni
 train: # train images (relative to 'path')  16551 images
-  - images/train_up
-  - images/train_down
+  # - images/train_up
+  # - images/train_down
   - images/train_front
 val: # val images (relative to 'path')  4952 images
-  - images/test_up
-  - images/test_down
+  # - images/test_up
+  # - images/test_down
   - images/test_front
 test: # test images (optional)
-  - images/test_up
-  - images/test_down
+  # - images/test_up
+  # - images/test_down
   - images/test_front
 
 # Classes
