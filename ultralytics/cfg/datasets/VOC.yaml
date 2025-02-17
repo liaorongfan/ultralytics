@@ -8,19 +8,22 @@
 #     └── VOC  ← downloads here (2.8 GB)
 
 # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
-path: ../datasets/omni
+path: ../datasets/yolo_omni_2018W
 train: # train images (relative to 'path')  16551 images
-  - images/train_up
-  - images/train_down
-  - images/train_front
+  # - images/train_up
+  # - images/train_down
+  # - images/train_front
+  - images/train
 val: # val images (relative to 'path')  4952 images
-  - images/test_up
-  - images/test_down
-  - images/test_front
+  # - images/test_up
+  # - images/test_down
+  # - images/test_front
+  - images/val
 test: # test images (optional)
-  - images/test_up
-  - images/test_down
-  - images/test_front
+  # - images/test_up
+  # - images/test_down
+  # - images/test_front
+  - images/val
 
 # Classes
 names:
@@ -43,6 +46,15 @@ names:
   16: "16"
   17: "17"
   18: "18"
+  19: "19"
+  20: "20"
+  21: "21"
+  22: "22"
+  23: "23"
+  24: "24"
+  25: "25"
+  26: "26"
+  27: "27"
 
 # Download script/URL (optional) ---------------------------------------------------------------------------------------
 download: |

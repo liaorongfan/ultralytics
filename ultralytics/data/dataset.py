@@ -217,9 +217,10 @@ class YOLODataset(BaseDataset):
 
         # cls = label.pop("cls")
         # _cls = cls.squeeze()
-        # _cls = (_cls == 11) | (_cls == 10) | (_cls == 8)
-        # bboxes = bboxes[~_cls]
-        # cls = cls[~_cls]
+        # # _cls = (_cls == 11) | (_cls == 10) | (_cls == 8)
+        # _cls = _cls == 12
+        # bboxes = bboxes[_cls]
+        # cls = cls[_cls]
         # label["cls"] = cls
         
         # NOTE: do NOT resample oriented boxes

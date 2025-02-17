@@ -6,9 +6,9 @@ import os
 
 if __name__ == "__main__":
     # Load a model
-    model = YOLO("yolo11l.pt")  # load an official model
-    model = YOLO("runs/detect/train3/weights/best.pt")  # load a custom model
-    imgs = glob.glob("/root/datasets/omni/images/test_front/*.JPG")
+    model = YOLO("yolo11s.pt")  # load an official model
+    model = YOLO("runs/detect/train27/weights/best.pt")  # load a custom model
+    imgs = glob.glob("/root/omni_2018W_split/img/val/*.JPG")
     for img in imgs:
         # Predict with the model
         results = model(img)
@@ -21,7 +21,7 @@ if __name__ == "__main__":
             x1, y1, x2, y2 = bbox
             # x1, y1, x2, y2 = x1 * w_scale, y1 * h_scale, x2 * w_scale, y2 * h_scale
             writer.addObject(str(cls), x1, y1, x2, y2)
-        label_dir = "/root/front/pred/test_front"
+        label_dir = "/root/omni_2018_split/pred"
         os.makedirs(label_dir, exist_ok=True)
         save_to = os.path.join(label_dir, os.path.basename(img).replace(".JPG", ".xml"))
         writer.save(save_to)
